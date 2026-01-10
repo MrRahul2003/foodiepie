@@ -5,7 +5,7 @@ import Footer from "@/src/_components/adminComponents/Footer";
 import Header1 from "@/src/_components/adminComponents/Header1";
 import Header2 from "@/src/_components/adminComponents/Header2";
 import Header3 from "@/src/_components/adminComponents/Header3";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ORDER_TYPES,
@@ -17,7 +17,7 @@ import { useAdminSession } from "@/src/contexts/AdminSessionContext";
 import styles from "../formStyles.module.css";
 import RequireAdminAuth from "@/src/_components/adminComponents/RequireAuth";
 
-function EditItemPage() {
+function EditItemContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const itemId = searchParams.get("id");
@@ -388,6 +388,14 @@ function EditItemPage() {
 
       <Footer />
     </RequireAdminAuth>
+  );
+}
+
+function EditItemPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <EditItemContent />
+    </Suspense>
   );
 }
 
