@@ -48,7 +48,7 @@ function Page() {
   const [description, setDescription] = useState("");
   const [foodCategory, setFoodCategory] = useState("");
   const [type, setType] = useState("");
-  const [imageUrl, setImageUrl] = useState("https://picsum.photos/200/300");
+  const [imageUrl, setImageUrl] = useState("");
   const [availability, setAvailability] = useState(true);
   const [tags, setTags] = useState([]);
   const [variants, setVariants] = useState([
@@ -114,7 +114,7 @@ function Page() {
     setDescription("");
     setFoodCategory("");
     setType("");
-    setImageUrl("https://picsum.photos/200/300");
+    setImageUrl("");
     setAvailability(true);
     setTags([]);
     setVariants([{ label: "Regular", price: 1, in_stock: true }]);
@@ -219,7 +219,7 @@ function Page() {
                   <input
                     type="url"
                     className={styles.formInput}
-                    value={imageUrl || "https://picsum.photos/200/300"}
+                    value={imageUrl || ""}
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="https://example.com/image.jpg"
                   />

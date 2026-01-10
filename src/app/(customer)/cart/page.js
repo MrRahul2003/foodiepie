@@ -415,7 +415,7 @@ function CartPage() {
                         <div key={item.id} className={styles.cartItem}>
                           <div className={styles.itemImage}>
                             <img
-                              src={item.imageUrl || "https://picsum.photos/100/100"}
+                              src={item.imageUrl || ""}
                               alt={item.name}
                             />
                             <span

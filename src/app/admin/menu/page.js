@@ -392,7 +392,7 @@ function Page() {
                             {/* Image Section */}
                             <div className={styles.cardImageWrapper}>
                               <img 
-                                src={item.imageUrl || "https://picsum.photos/300/200"} 
+                                src={item.imageUrl || ""} 
                                 alt={item.name}
                                 className={styles.cardImage}
                               />
@@ -464,7 +464,7 @@ function Page() {
             {/* Modal Image */}
             <div className={styles.modalImageWrapper}>
               <img
-                src={selectedItem.imageUrl || "https://picsum.photos/500/300"}
+                src={selectedItem.imageUrl || ""}
                 alt={selectedItem.name}
                 className={styles.modalImage}
               />
