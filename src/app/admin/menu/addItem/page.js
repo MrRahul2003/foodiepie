@@ -94,7 +94,7 @@ function Page() {
       foodType: type,
       imageUrl: imageUrl,
       variants,
-      availability,
+      isAvailable: availability,
       tags,
       restaurantId: mongoRestaurantId,
     };

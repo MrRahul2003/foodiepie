@@ -18,6 +18,7 @@ const RestaurantFoodModel = new mongoose.Schema(
     ],
     tags: [{ type: String }],
     imageUrl: { type: String, default: "" },
+    isAvailable: { type: Boolean, default: true },
     restaurantId: {
       type: Schema.Types.ObjectId,
       ref: "RestaurantAuth",

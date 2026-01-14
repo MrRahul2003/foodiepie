@@ -74,7 +74,7 @@ function EditItemContent() {
           setFoodCategory(item.category || "");
           setType(item.foodType || "");
           setImageUrl(item.imageUrl || "");
-          setAvailability(item.availability ?? true);
+          setAvailability(item.isAvailable ?? true);
           setTags(Array.isArray(item.tags) ? item.tags : []);
           setVariants(
             item.variants || [{ label: "Regular", price: 1, isAvailable: true }]
@@ -128,7 +128,7 @@ function EditItemContent() {
       foodType: type,
       imageUrl: imageUrl,
       variants,
-      availability,
+      isAvailable: availability,
       tags,
       restaurantId: mongoRestaurantId,
       updatedAt: new Date().toISOString(),
@@ -217,8 +217,11 @@ function EditItemContent() {
                     <label className={styles.toggleSwitch}>
                       <input
                         type="checkbox"
-                        checked={availability ?? true}
-                        onChange={(e) => setAvailability(e.target.checked)}
+                        checked={availability}
+                        onChange={(e) => {
+                          console.log("Checkbox changed:", e.target.checked);
+                          setAvailability(e.target.checked);
+                        }}
                       />
                       <span className={styles.toggleSlider}></span>
                     </label>

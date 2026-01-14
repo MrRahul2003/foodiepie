@@ -102,6 +102,12 @@ function CustomerMenuPage() {
   
   /** Trigger to refetch items */
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  
+  /** Number of items to display (for load more) */
+  const [itemsToShow, setItemsToShow] = useState(6);
+  
+  /** Number of items to load per click */
+  const ITEMS_PER_LOAD = 6;
 
   // -----------------------------------------------------------------------
   // EFFECTS
@@ -252,6 +258,32 @@ function CustomerMenuPage() {
   }, [Items, filter]);
 
   /**
+   * Items to display (limited by itemsToShow)
+   */
+  const displayedItems = useMemo(() => {
+    return filteredItems.slice(0, itemsToShow);
+  }, [filteredItems, itemsToShow]);
+
+  /**
+   * Check if there are more items to load
+   */
+  const hasMoreItems = filteredItems.length > itemsToShow;
+
+  /**
+   * Load more items handler
+   */
+  const handleLoadMore = () => {
+    setItemsToShow((prev) => prev + ITEMS_PER_LOAD);
+  };
+
+  /**
+   * Reset items to show when filter changes
+   */
+  useEffect(() => {
+    setItemsToShow(6);
+  }, [filter]);
+
+  /**
    * Total cart count
    */
   const cartCount = useMemo(() => {
@@ -398,68 +430,90 @@ function CustomerMenuPage() {
 
                     {/* Menu Items */}
                     {!loading && !error && (
-                      <div className="row">
-                        {filteredItems.map((item) => (
-                          <div
-                            className="col-lg-4 col-md-6 col-sm-12 mb-4"
-                            key={item._id}
-                          >
-                            <div 
-                              className={styles.foodCard}
-                              onClick={() => openModal(item)}
+                      <>
+                        <div className="row">
+                          {displayedItems.map((item) => (
+                            <div
+                              className="col-lg-4 col-md-6 col-sm-12 mb-4"
+                              key={item._id}
                             >
-                              {/* Image Section */}
-                              <div className={styles.cardImageWrapper}>
-                                <img 
-                                  src={item.imageUrl || ""} 
-                                  alt={item.name}
-                                  className={styles.cardImage}
-                                />
-                                {/* Food Type Badge */}
-                                <span className={`${styles.foodTypeBadge} ${
-                                  item.foodType === "Veg" ? styles.veg : 
-                                  item.foodType === "Non-Veg" ? styles.nonVeg : styles.vegan
-                                }`}>
-                                  {item.foodType}
-                                </span>
-                                {/* Price Badge */}
-                                <span className={styles.priceBadge}>
-                                  ₹{item.variants?.[0]?.price || "N/A"}
-                                </span>
-                              </div>
-
-                              {/* Content Section */}
-                              <div className={styles.cardContent}>
-                                <h4 className={styles.cardTitle}>
-                                  {item.name}
-                                </h4>
-                                
-                                <p className={styles.cardDescription}>
-                                  {item.description}
-                                </p>
-
-                                {/* Category Badge */}
-                                <div className={styles.categoryBadgeWrapper}>
-                                  <span className={styles.categoryBadge}>
-                                    {item.category}
+                              <div 
+                                className={styles.foodCard}
+                                onClick={() => openModal(item)}
+                              >
+                                {/* Image Section */}
+                                <div className={styles.cardImageWrapper}>
+                                  <img 
+                                    src={item.imageUrl || ""} 
+                                    alt={item.name}
+                                    className={styles.cardImage}
+                                  />
+                                  {/* Food Type Badge */}
+                                  <span className={`${styles.foodTypeBadge} ${
+                                    item.foodType === "Veg" ? styles.veg : 
+                                    item.foodType === "Non-Veg" ? styles.nonVeg : styles.vegan
+                                  }`}>
+                                    {item.foodType}
+                                  </span>
+                                  {/* Price Badge */}
+                                  <span className={styles.priceBadge}>
+                                    ₹{item.variants?.[0]?.price || "N/A"}
                                   </span>
                                 </div>
 
-                                {/* Tags */}
-                                {item.tags && item.tags.length > 0 && (
-                                  <div className={styles.tagsWrapper}>
-                                    {item.tags.slice(0, 3).map((tag, idx) => (
-                                      <span key={idx} className={styles.tag}>
-                                        {tag}
-                                      </span>
-                                    ))}
+                                {/* Content Section */}
+                                <div className={styles.cardContent}>
+                                  <h4 className={styles.cardTitle}>
+                                    {item.name}
+                                  </h4>
+                                  
+                                  <p className={styles.cardDescription}>
+                                    {item.description}
+                                  </p>
+
+                                  {/* Category Badge */}
+                                  <div className={styles.categoryBadgeWrapper}>
+                                    <span className={styles.categoryBadge}>
+                                      {item.category}
+                                    </span>
                                   </div>
-                                )}
+
+                                  {/* Tags */}
+                                  {item.tags && item.tags.length > 0 && (
+                                    <div className={styles.tagsWrapper}>
+                                      {item.tags.map((tag, idx) => (
+                                        <span key={idx} className={styles.tag}>
+                                          {tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
+                          ))}
+                        </div>
+
+                        {/* Load More Button */}
+                        {hasMoreItems && (
+                          <div className={styles.loadMoreWrapper}>
+                            <button 
+                              className={styles.loadMoreBtn}
+                              onClick={handleLoadMore}
+                            >
+                              <i className="fa fa-plus-circle"></i> Load More
+                              <span className={styles.loadMoreCount}>
+                                ({filteredItems.length - itemsToShow} more items)
+                              </span>
+                            </button>
                           </div>
-                        ))}
-                      </div>
+                        )}
+
+                        {/* Items count info */}
+                        <div className={styles.itemsInfo}>
+                          Showing {displayedItems.length} of {filteredItems.length} items
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>

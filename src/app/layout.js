@@ -34,6 +34,7 @@
 import Script from "next/script";
 import "./globals.css";
 import { SessionProvider } from "@/src/contexts/SessionContext";
+import { WebSocketProvider } from "@/src/contexts/WebSocketContext";
 
 export const metadata = {
   title: "Foodie Pie | Online Food Ordering",
@@ -73,7 +74,10 @@ export default function RootLayout({ children }) {
       <body>
         <div />
         {/* ===== SESSION PROVIDER FOR CUSTOMER AUTH ===== */}
-        <SessionProvider>{children}</SessionProvider>
+        {/* ===== WEBSOCKET PROVIDER FOR REAL-TIME UPDATES ===== */}
+        <SessionProvider>
+          <WebSocketProvider>{children}</WebSocketProvider>
+        </SessionProvider>
 
         {/* ===== VENDOR SCRIPTS ===== */}
         <Script src="/js/vendor/modernizr-2.8.3.min.js"/>

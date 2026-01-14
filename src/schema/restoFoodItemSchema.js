@@ -32,6 +32,8 @@ export const addFoodItemSchema = z
 
     imageUrl: z.string().url("Invalid image URL").optional().or(z.literal("")),
 
+    isAvailable: z.coerce.boolean().optional().default(true),
+
     restaurantId: z.string().min(1, "Restaurant ID is required"),
   })
   .passthrough(); // 🔥 allows extra fields (FormData, files, etc.)

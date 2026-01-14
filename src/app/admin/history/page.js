@@ -99,7 +99,7 @@ function AdminHistoryPage() {
   // -----------------------------------------------------------------------
 
   /**
-   * Fetches completed orders (Served/Cancelled) from database
+   * Fetches all orders from database
    */
   const fetchData = useCallback(async () => {
     if (!restaurantId) return;
@@ -108,11 +108,8 @@ function AdminHistoryPage() {
       const ordersResult = await getRestaurantOrdersAction(restaurantId);
 
       if (ordersResult.success) {
-        // Filter only completed orders (Served or Cancelled)
-        const completedOrders = ordersResult.orders.filter(
-          (order) => order.status === "Served" || order.status === "Cancelled"
-        );
-        setOrders(completedOrders);
+        // Show all orders (not just completed)
+        setOrders(ordersResult.orders);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -278,6 +275,9 @@ function AdminHistoryPage() {
                 className={styles.filterSelect}
               >
                 <option value="all">All</option>
+                <option value="placed">Placed</option>
+                <option value="accepted">Accepted</option>
+                <option value="preparing">Preparing</option>
                 <option value="served">Served</option>
                 <option value="cancelled">Cancelled</option>
               </select>

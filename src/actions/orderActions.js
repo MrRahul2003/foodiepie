@@ -2,6 +2,17 @@
 import { connectDB } from "@/src/lib/db";
 import Order from "@/src/models/OrderModel";
 import CustomerProfile from "@/src/models/CustomerProfileModel";
+import {
+  broadcastToAdminAction,
+  broadcastToCustomerAction,
+} from "./broadcastActions";
+
+// WebSocket event constants (inline to avoid importing objects in server actions)
+const WS_EVENTS = {
+  ORDER_PLACED: "order:placed",
+  ORDER_UPDATED: "order:updated",
+  ORDER_STATUS_CHANGED: "order:status_changed",
+};
 
 /* ---------------- HELPERS ---------------- */
 function serializePlain(value) {
@@ -102,9 +113,16 @@ export async function placeOrderAction(orderData) {
       { $push: { orders: newOrder._id }, updatedAt: new Date() }
     );
 
+    const serializedOrder = serializePlain(newOrder.toObject());
+
+    // Broadcast new order to admin (real-time notification)
+    await broadcastToAdminAction(restoId, WS_EVENTS.ORDER_PLACED, {
+      order: serializedOrder,
+    });
+
     return {
       success: true,
-      order: serializePlain(newOrder.toObject()),
+      order: serializedOrder,
     };
   } catch (error) {
     console.error("Place Order Error:", error);
@@ -215,9 +233,34 @@ export async function updateOrderStatusAction(orderId, newStatus) {
       };
     }
 
+    const serializedOrder = serializePlain(updatedOrder);
+
+    // Broadcast status change to customer (real-time notification)
+    await broadcastToCustomerAction(
+      updatedOrder.restoId,
+      updatedOrder.customerPhone,
+      WS_EVENTS.ORDER_STATUS_CHANGED,
+      {
+        orderId: updatedOrder.orderId,
+        status: newStatus,
+        order: serializedOrder,
+      }
+    );
+
+    // Also broadcast to all admins for this restaurant
+    await broadcastToAdminAction(
+      updatedOrder.restoId,
+      WS_EVENTS.ORDER_UPDATED,
+      {
+        orderId: updatedOrder.orderId,
+        status: newStatus,
+        order: serializedOrder,
+      }
+    );
+
     return {
       success: true,
-      order: serializePlain(updatedOrder),
+      order: serializedOrder,
     };
   } catch (error) {
     console.error("Update Order Status Error:", error);

@@ -49,6 +49,9 @@ import RequireAdminAuth from "@/src/_components/adminComponents/RequireAuth";
 /** LocalStorage key for menu items cache */
 const MENU_ITEMS_KEY = "foodie_pie_menu_items";
 
+/** Number of items to display per page */
+const ITEMS_PER_PAGE = 6;
+
 // =========================================================================
 // HELPER FUNCTIONS
 // =========================================================================
@@ -95,6 +98,15 @@ function Page() {
   
   /** Item pending delete confirmation */
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  
+  /** Number of visible items (for load more) */
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+  
+  /** Availability filter ("All", "Available", "Unavailable") */
+  const [availabilityFilter, setAvailabilityFilter] = useState("All");
+  
+  /** Food type filter ("All", "Veg", "Non-Veg", "Vegan") */
+  const [foodTypeFilter, setFoodTypeFilter] = useState("All");
 
   // -----------------------------------------------------------------------
   // DATA FETCHING
@@ -230,12 +242,60 @@ function Page() {
   // -----------------------------------------------------------------------
 
   /**
-   * Filters items based on selected category
+   * Filters items based on selected category, availability, and food type
    */
   const filteredItems = useMemo(() => {
-    if (filter === "All") return Items;
-    return Items.filter((item) => item.category === filter);
-  }, [Items, filter]);
+    let items = [...Items];
+    
+    // Filter by availability
+    if (availabilityFilter === "Available") {
+      items = items.filter((item) => 
+        item.isAvailable !== false && 
+        item.variants?.some((variant) => variant.isAvailable)
+      );
+    } else if (availabilityFilter === "Unavailable") {
+      items = items.filter((item) => 
+        item.isAvailable === false || 
+        !item.variants?.some((variant) => variant.isAvailable)
+      );
+    }
+    
+    // Filter by food type
+    if (foodTypeFilter !== "All") {
+      items = items.filter((item) => item.foodType === foodTypeFilter);
+    }
+    
+    // Filter by category
+    if (filter !== "All") {
+      items = items.filter((item) => item.category === filter);
+    }
+    
+    return items;
+  }, [Items, filter, availabilityFilter, foodTypeFilter]);
+
+  /**
+   * Items to display (limited by visibleCount for load more)
+   */
+  const displayedItems = useMemo(() => {
+    return filteredItems.slice(0, visibleCount);
+  }, [filteredItems, visibleCount]);
+
+  /**
+   * Check if there are more items to load
+   */
+  const hasMoreItems = filteredItems.length > visibleCount;
+
+  /**
+   * Remaining items count
+   */
+  const remainingItems = filteredItems.length - visibleCount;
+
+  /**
+   * Load more items handler
+   */
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
+  };
 
   // -----------------------------------------------------------------------
   // RENDER
@@ -271,7 +331,7 @@ function Page() {
                       </div>
                     </div>
                     <div className="col-lg-6 col-md-6 col-sm-6 col-xs-3">
-                      <div className="breadcomb-report" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                      <div className="breadcomb-report" style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "flex-end" }}>
                         <button
                           data-toggle="tooltip"
                           data-placement="left"
@@ -304,7 +364,7 @@ function Page() {
                   <div className="inbox-status">
                     <ul className="inbox-st-nav inbox-ft">
                       <li className={filter === "All" ? "active" : ""}>
-                        <a href="#" onClick={(e) => { e.preventDefault(); setFilter("All"); }}>
+                        <a href="#" onClick={(e) => { e.preventDefault(); setFilter("All"); setVisibleCount(ITEMS_PER_PAGE); }}>
                           <i className="notika-icon notika-mail" /> All
                           <span className="pull-right">{Items.length}</span>
                         </a>
@@ -312,10 +372,56 @@ function Page() {
 
                       {DEFAULT_CATEGORIES.map((category) => (
                         <li key={category} className={filter === category ? "active" : ""}>
-                          <a href="#" onClick={(e) => { e.preventDefault(); setFilter(category); }}>
+                          <a href="#" onClick={(e) => { e.preventDefault(); setFilter(category); setVisibleCount(ITEMS_PER_PAGE); }}>
                             <i className="notika-icon notika-mail" /> {category}
                             <span className="pull-right">
                               {Items.filter((item) => item.category === category).length}
+                            </span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <hr />
+                  
+                  {/* Availability Filter */}
+                  <div className="compose-ml">
+                    <a className="btn" href="#">
+                      Availability :
+                    </a>
+                  </div>
+                  <div className="inbox-status">
+                    <ul className="inbox-st-nav inbox-ft">
+                      {["All", "Available", "Unavailable"].map((status) => (
+                        <li key={status} className={availabilityFilter === status ? "active" : ""}>
+                          <a href="#" onClick={(e) => { e.preventDefault(); setAvailabilityFilter(status); setVisibleCount(ITEMS_PER_PAGE); }}>
+                            <i className={`notika-icon ${status === "Available" ? "notika-checked" : status === "Unavailable" ? "notika-close" : "notika-list"}`} /> {status}
+                            <span className="pull-right">
+                              {status === "All" ? Items.length : 
+                               status === "Available" ? Items.filter((item) => item.isAvailable !== false && item.variants?.some((v) => v.isAvailable)).length :
+                               Items.filter((item) => item.isAvailable === false || !item.variants?.some((v) => v.isAvailable)).length}
+                            </span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <hr />
+                  
+                  {/* Food Type Filter */}
+                  <div className="compose-ml">
+                    <a className="btn" href="#">
+                      Food Type :
+                    </a>
+                  </div>
+                  <div className="inbox-status">
+                    <ul className="inbox-st-nav inbox-ft">
+                      {["All", "Veg", "Non-Veg", "Vegan"].map((type) => (
+                        <li key={type} className={foodTypeFilter === type ? "active" : ""}>
+                          <a href="#" onClick={(e) => { e.preventDefault(); setFoodTypeFilter(type); setVisibleCount(ITEMS_PER_PAGE); }}>
+                            <i className="notika-icon notika-star" style={{ color: type === "Veg" ? "#22c55e" : type === "Non-Veg" ? "#ef4444" : type === "Vegan" ? "#10b981" : "inherit" }} /> {type}
+                            <span className="pull-right">
+                              {type === "All" ? Items.length : Items.filter((item) => item.foodType === type).length}
                             </span>
                           </a>
                         </li>
@@ -362,7 +468,7 @@ function Page() {
                     {/* Menu Items */}
                     {!loading && filteredItems.length > 0 && (
                     <div className="row">
-                      {filteredItems.map((item) => (
+                      {displayedItems.map((item) => (
                         <div
                           className="col-lg-4 col-md-6 col-sm-12 mb-4"
                           key={item._id}
@@ -429,7 +535,7 @@ function Page() {
                               {/* Tags */}
                               {item.tags && item.tags.length > 0 && (
                                 <div className={styles.tagsWrapper}>
-                                  {item.tags.slice(0, 3).map((tag, idx) => (
+                                  {item.tags.map((tag, idx) => (
                                     <span key={idx} className={styles.tag}>
                                       {tag}
                                     </span>
@@ -441,6 +547,23 @@ function Page() {
                         </div>
                       ))}
                     </div>
+                    )}
+
+                    {/* Load More Button */}
+                    {!loading && hasMoreItems && (
+                      <div className={styles.loadMoreContainer}>
+                        <button 
+                          className={styles.loadMoreBtn}
+                          onClick={handleLoadMore}
+                        >
+                          <span className={styles.loadMoreIcon}>+</span>
+                          <span className={styles.loadMoreText}>Load More</span>
+                          <span className={styles.loadMoreCount}>({remainingItems} more items)</span>
+                        </button>
+                        <p className={styles.showingCount}>
+                          Showing {displayedItems.length} of {filteredItems.length} items
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>

@@ -37,6 +37,7 @@ import Header1 from "@/src/_components/customerComponents/Header1";
 import Header2 from "@/src/_components/customerComponents/Header2";
 import Header3 from "@/src/_components/customerComponents/Header3";
 import { useSession } from "@/src/contexts/SessionContext";
+import { useWebSocket } from "@/src/contexts/WebSocketContext";
 import { getCustomerOrdersAction } from "@/src/actions/orderActions";
 import styles from "./order.module.css";
 import RequireAuth from "@/src/_components/customerComponents/RequireAuth";
@@ -52,9 +53,6 @@ const ORDER_STATUSES = [
   { id: "Preparing", label: "Preparing", icon: "👨‍🍳" },
   { id: "Served", label: "Served", icon: "🍽️" },
 ];
-
-/** Polling interval for order status updates (15 seconds) */
-const POLL_INTERVAL = 15000;
 
 // =========================================================================
 // HELPER FUNCTIONS
@@ -103,6 +101,7 @@ const getStatusIndex = (status) => {
 function OrderPage() {
   const router = useRouter();
   const session = useSession();
+  const { connect, disconnect, subscribe, isConnected, WS_EVENTS } = useWebSocket();
 
   // -----------------------------------------------------------------------
   // STATE VARIABLES
@@ -181,17 +180,50 @@ function OrderPage() {
   // -----------------------------------------------------------------------
 
   /**
-   * Effect: Initial fetch and polling setup
-   * Sets up interval for live status updates
+   * Effect: Initial fetch and WebSocket setup
+   * Connects to SSE for real-time status updates
    */
   useEffect(() => {
     if (session.isLoaded) {
       fetchOrders();
-      // Poll for status updates every 15 seconds
-      const interval = setInterval(fetchOrders, POLL_INTERVAL);
-      return () => clearInterval(interval);
+
+      // Connect to WebSocket for real-time updates
+      if (session.restaurantId && session.customerPhone) {
+        connect({
+          restaurantId: session.restaurantId,
+          type: "customer",
+          customerPhone: session.customerPhone,
+        });
+      }
+
+      return () => disconnect();
     }
-  }, [session.isLoaded, fetchOrders]);
+  }, [session.isLoaded, session.restaurantId, session.customerPhone, fetchOrders, connect, disconnect]);
+
+  /**
+   * Effect: Subscribe to WebSocket events
+   * Handles real-time order status updates
+   */
+  useEffect(() => {
+    if (!isConnected) return;
+
+    // Handle order status change
+    const unsubStatusChange = subscribe(WS_EVENTS.ORDER_STATUS_CHANGED, (data) => {
+      if (data?.orderId) {
+        setOrders((prev) =>
+          prev.map((order) =>
+            order.orderId === data.orderId
+              ? { ...order, status: data.status }
+              : order
+          )
+        );
+      }
+    });
+
+    return () => {
+      unsubStatusChange();
+    };
+  }, [isConnected, subscribe, WS_EVENTS]);
 
   // -----------------------------------------------------------------------
   // EVENT HANDLERS
